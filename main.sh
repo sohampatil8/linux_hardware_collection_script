@@ -8,7 +8,7 @@ IFS=$'\n\t'
 
 # Output file in same dir as script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-OUTFILE="$SCRIPT_DIR/linux_inventory.csv"
+OUTFILE="$SCRIPT_DIR/linux_inventory1.csv"
 
 # CSV header (matches your requested list)
 HEADER="HostName,Status,Remark,Domain,HypervisorPresent,Manufactuter,Model,NumberOfLogicalProcessors,NumberOfProcessors,PartOfDomain,SystemFamily,SystemSKUNumber,SystemType,TotalPhysicalMemory (GB),Primary_UserName,BootDevice,BuildNumber,Operating_System,OS_InstallDate,OS_Manufacturer,OS_Name,OSArchitecture,CPU,MaxClockSpeed(MHz),CurrentClockSpeed(MHz),Disks,Number_of_Drives,Drives,Size_of_Drives,Graphics_Card,Network_Adapters,MacAddress,IP_Address,Total_Sockets,Total_Cores,Cores_Per_Socket,Last_Scan_Time"
