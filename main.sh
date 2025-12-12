@@ -104,7 +104,7 @@ fi
 # LICENSE_PRODUCT_KEY="N/A"
 # PRODUCT_KEY="N/A"
 
- OS_ARCH=$(uname -m 2>/dev/null || echo "N/A")
+OS_ARCH=$(uname -m 2>/dev/null || echo "N/A")
 # REGISTERED_USER="N/A"
 # WINDOWS_DIRECTORY="N/A"
 
