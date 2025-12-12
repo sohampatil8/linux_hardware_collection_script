@@ -1,0 +1,158 @@
+===== BASIC INFO =====
+   Static hostname: centos7
+         Icon name: computer-vm
+           Chassis: vm
+        Machine ID: 2a8a7739c712014db7456515acea0fde
+           Boot ID: cb63761842bf484282bc143e8f8aab40
+    Virtualization: kvm
+  Operating System: CentOS Linux 7 (Core)
+       CPE OS Name: cpe:/o:centos:centos:7
+            Kernel: Linux 3.10.0-957.el7.x86_64
+      Architecture: x86-64
+
+===== CPU =====
+Architecture:          x86_64
+CPU op-mode(s):        32-bit, 64-bit
+Byte Order:            Little Endian
+CPU(s):                2
+On-line CPU(s) list:   0,1
+Thread(s) per core:    1
+Core(s) per socket:    2
+Socket(s):             1
+NUMA node(s):          1
+Vendor ID:             GenuineIntel
+CPU family:            6
+Model:                 154
+Model name:            12th Gen Intel(R) Core(TM) i5-1245U
+Stepping:              4
+CPU MHz:               2495.992
+BogoMIPS:              4991.98
+Hypervisor vendor:     KVM
+Virtualization type:   full
+L1d cache:             48K
+L1i cache:             32K
+L2 cache:              1280K
+L3 cache:              12288K
+NUMA node0 CPU(s):     0,1
+Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc eagerfpu pni pclmulqdq ssse3 cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx rdrand hypervisor lahf_lm abm 3dnowprefetch fsgsbase bmi1 avx2 bmi2 invpcid rdseed clflushopt flush_l1d arch_capabilities
+
+===== MEMORY =====
+              total        used        free      shared  buff/cache   available
+Mem:           3.7G        723M        2.3G         30M        687M        2.7G
+Swap:          3.9G          0B        3.9G
+# dmidecode 3.1
+Getting SMBIOS data from sysfs.
+SMBIOS 2.5 present.
+
+
+===== DISKS =====
+NAME            FSTYPE       SIZE MOUNTPOINT TYPE
+sda                           40G            disk
+├─sda1          xfs            1G /boot      part
+└─sda2          LVM2_member   39G            part
+  ├─centos-root xfs         35.1G /          lvm
+  └─centos-swap swap         3.9G [SWAP]     lvm
+sr0                         1024M            rom
+
+Disk /dev/sda: 42.9 GB, 42949672960 bytes, 83886080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk label type: dos
+Disk identifier: 0x000c2a9b
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *        2048     2099199     1048576   83  Linux
+/dev/sda2         2099200    83886079    40893440   8e  Linux LVM
+
+Disk /dev/mapper/centos-root: 37.7 GB, 37706792960 bytes, 73646080 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+
+Disk /dev/mapper/centos-swap: 4160 MB, 4160749568 bytes, 8126464 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+
+
+===== SYSTEM / BASEBOARD =====
+# dmidecode 3.1
+Getting SMBIOS data from sysfs.
+SMBIOS 2.5 present.
+
+Handle 0x0001, DMI type 1, 27 bytes
+System Information
+	Manufacturer: innotek GmbH
+	Product Name: VirtualBox
+	Version: 1.2
+	Serial Number: 0
+	UUID: 2a8a7739-c712-014d-b745-6515acea0fde
+	Wake-up Type: Power Switch
+	SKU Number: Not Specified
+	Family: Virtual Machine
+
+Handle 0x0008, DMI type 2, 15 bytes
+Base Board Information
+	Manufacturer: Oracle Corporation
+	Product Name: VirtualBox
+	Version: 1.2
+	Serial Number: 0
+	Asset Tag: Not Specified
+	Features:
+		Board is a hosting board
+	Location In Chassis: Not Specified
+	Chassis Handle: 0x0003
+	Type: Motherboard
+	Contained Object Handles: 0
+
+
+===== PCI DEVICES =====
+00:00.0 Host bridge: Intel Corporation 440FX - 82441FX PMC [Natoma] (rev 02)
+00:01.0 ISA bridge: Intel Corporation 82371SB PIIX3 ISA [Natoma/Triton II]
+00:01.1 IDE interface: Intel Corporation 82371AB/EB/MB PIIX4 IDE (rev 01)
+00:02.0 VGA compatible controller: VMware SVGA II Adapter
+00:03.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 02)
+00:04.0 System peripheral: InnoTek Systemberatung GmbH VirtualBox Guest Service
+00:05.0 Multimedia audio controller: Intel Corporation 82801AA AC'97 Audio Controller (rev 01)
+00:06.0 USB controller: Apple Inc. KeyLargo/Intrepid USB
+00:07.0 Bridge: Intel Corporation 82371AB/EB/MB PIIX4 ACPI (rev 08)
+00:08.0 Ethernet controller: Intel Corporation 82540EM Gigabit Ethernet Controller (rev 02)
+00:0b.0 USB controller: Intel Corporation 82801FB/FBM/FR/FW/FRW (ICH6 Family) USB2 EHCI Controller
+00:0d.0 SATA controller: Intel Corporation 82801HM/HEM (ICH8M/ICH8M-E) SATA Controller [AHCI mode] (rev 02)
+
+===== USB DEVICES =====
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+
+===== LSHW (SUMMARY) =====
+H/W path          Device      Class       Description
+=====================================================
+                              system      VirtualBox
+/0                            bus         VirtualBox
+/0/0                          memory      128KiB BIOS
+/0/1                          memory      4GiB System memory
+/0/2                          processor   12th Gen Intel(R) Core(TM) i5-1245U
+/0/100                        bridge      440FX - 82441FX PMC [Natoma]
+/0/100/1                      bridge      82371SB PIIX3 ISA [Natoma/Triton II]
+/0/100/1.1        scsi1       storage     82371AB/EB/MB PIIX4 IDE
+/0/100/1.1/0.0.0  /dev/cdrom  disk        CD-ROM
+/0/100/2                      display     SVGA II Adapter
+/0/100/3          enp0s3      network     82540EM Gigabit Ethernet Controller
+/0/100/4                      generic     VirtualBox Guest Service
+/0/100/5                      multimedia  82801AA AC'97 Audio Controller
+/0/100/6                      bus         KeyLargo/Intrepid USB
+/0/100/6/1        usb2        bus         OHCI PCI host controller
+/0/100/7                      bridge      82371AB/EB/MB PIIX4 ACPI
+/0/100/8          enp0s8      network     82540EM Gigabit Ethernet Controller
+/0/100/b                      bus         82801FB/FBM/FR/FW/FRW (ICH6 Family) USB2 EHCI Controller
+/0/100/b/1        usb1        bus         EHCI Host Controller
+/0/100/d          scsi2       storage     82801HM/HEM (ICH8M/ICH8M-E) SATA Controller [AHCI mode]
+/0/100/d/0.0.0    /dev/sda    disk        42GB VBOX HARDDISK
+/0/100/d/0.0.0/1  /dev/sda1   volume      1GiB Linux filesystem partition
+/0/100/d/0.0.0/2  /dev/sda2   volume      38GiB Linux LVM Physical Volume partition
+/0/3                          input       PnP device PNP0303
+/0/4                          input       PnP device PNP0f03
+/1                virbr0-nic  network     Ethernet interface
+/2                virbr0      network     Ethernet interface
