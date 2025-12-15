@@ -266,6 +266,9 @@ for v in "${VALUES[@]}"; do
   fi
 done
 
+# Convert multi-line header to single horizontal line
+HEADER=$(echo "$HEADER" | tr -d '\n' | sed 's/ //g')
+
 # Write file (overwrite each run)
 {
   printf "%s\n" "$HEADER"
