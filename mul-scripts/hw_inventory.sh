@@ -3,12 +3,12 @@
 # Collect full inventory mapped from Windows-style fields and always write linux_inventory.csv
 # Usage: just run the script (it will write linux_inventory.csv in same directory)
 
-set -euo pipefail
+set -uo pipefail
 IFS=$'\n\t'
 
 # Output file in same dir as script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-OUTFILE="$SCRIPT_DIR/linux_inventory2.csv"
+OUTFILE="/tmp/linux_inventory.sh"
 
 # CSV header (matches your requested list)
 HEADER="HostName,

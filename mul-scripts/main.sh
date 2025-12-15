@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Multi-host Linux Inventory Scanner with Parallel Execution + Logging
 
-set -euo pipefail
+set -uo pipefail
 IFS=$'\n\t'
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
