@@ -12,7 +12,7 @@ OUTFILE="$SCRIPT_DIR/linux_inventory2.csv"
 
 # CSV header (matches your requested list)
 HEADER={
-    HostName,
+    "HostName",
     Status,
     Remark,
     Domain,
