@@ -11,8 +11,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 OUTFILE="$SCRIPT_DIR/linux_inventory2.csv"
 
 # CSV header (matches your requested list)
-HEADER={
-    "HostName,
+HEADER="HostName,
     Status,
     Remark,
     Domain,
@@ -49,7 +48,6 @@ HEADER={
     Total_Cores,
     Cores_Per_Socket,
     Last_Scan_Time"
-    }
 # helper to csv-quote values safely
 csvq(){
   local v="${1:-}"
