@@ -32,56 +32,61 @@ while IFS= read -r target || [[ -n "$target" ]]; do
 
   echo "Scanning $HOST ..."
 
-  SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes $USER@$HOST"
+  SSH=(ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 "$USER@$HOST")
 
-  HOSTNAME=$($SSH "hostname -s" 2>/dev/null || echo "")
+  if ! "${SSH[@]}" "true" >/dev/null 2>&1; then
+    echo "$(csvq "$HOST"),\"Offline\",\"SSH Failed\"" >> "$OUTFILE"
+    continue
+  fi
+
+  HOSTNAME=$("${SSH[@]}" "hostname -s" 2>/dev/null)
   STATUS="Online"
   REMARK=""
 
-  DOMAIN=$($SSH "hostname -d" 2>/dev/null || echo "")
+  DOMAIN=$("${SSH[@]}" "hostname -d" 2>/dev/null || echo "")
   PART_OF_DOMAIN=$([ -n "$DOMAIN" ] && echo "True" || echo "False")
 
-  HypervisorPresent=$($SSH "systemd-detect-virt >/dev/null 2>&1 && echo True || echo False")
+  HypervisorPresent=$("${SSH[@]}" "systemd-detect-virt >/dev/null 2>&1 && echo True || echo False")
 
-  MANUFACTURER=$($SSH "sudo dmidecode -s system-manufacturer 2>/dev/null" || echo "N/A")
-  MODEL=$($SSH "sudo dmidecode -s system-product-name 2>/dev/null" || echo "N/A")
-  SYSTEM_FAMILY=$($SSH "sudo dmidecode -s system-family 2>/dev/null" || echo "N/A")
-  SYSTEM_SKU=$($SSH "sudo dmidecode -s system-sku 2>/dev/null" || echo "N/A")
+  MANUFACTURER=$("${SSH[@]}" "sudo dmidecode -s system-manufacturer 2>/dev/null || echo N/A")
+  MODEL=$("${SSH[@]}" "sudo dmidecode -s system-product-name 2>/dev/null || echo N/A")
+  SYSTEM_FAMILY=$("${SSH[@]}" "sudo dmidecode -s system-family 2>/dev/null || echo N/A")
+  SYSTEM_SKU=$("${SSH[@]}" "sudo dmidecode -s system-sku 2>/dev/null || echo N/A")
 
-  SYSTEM_TYPE=$($SSH "uname -m")
+  SYSTEM_TYPE=$("${SSH[@]}" "uname -m")
 
-  NUM_LOGICAL=$($SSH "nproc")
-  TOTAL_SOCKETS=$($SSH "lscpu | awk -F: '/Socket/ {print \$2}' | xargs")
-  TOTAL_CORES=$($SSH "lscpu | awk -F: '/CPU\\(s\\)/ {print \$2}' | xargs")
-  CORES_PER_SOCKET=$($SSH "lscpu | awk -F: '/Core\\(s\\) per socket/ {print \$2}' | xargs")
+  NUM_LOGICAL=$("${SSH[@]}" "nproc")
+  TOTAL_SOCKETS=$("${SSH[@]}" "lscpu | awk -F: '/Socket\\(s\\)/ {print \$2}' | xargs")
+  CORES_PER_SOCKET=$("${SSH[@]}" "lscpu | awk -F: '/Core\\(s\\) per socket/ {print \$2}' | xargs")
+  TOTAL_CORES=$("${SSH[@]}" "lscpu | awk -F: '/CPU\\(s\\)/ {print \$2}' | xargs")
 
-  TOTAL_MEM_GB=$($SSH "awk '/MemTotal/ {printf \"%.2f\", \$2/1024/1024}' /proc/meminfo")
+  TOTAL_MEM_GB=$("${SSH[@]}" "awk '/MemTotal/ {printf \"%.2f\", \$2/1024/1024}' /proc/meminfo")
 
-  PRIMARY_USER=$($SSH "logname 2>/dev/null || whoami")
-  BOOT_DEVICE=$($SSH "findmnt -n -o SOURCE /")
-  BUILD_NUMBER=$($SSH "uname -r")
+  PRIMARY_USER=$("${SSH[@]}" "logname 2>/dev/null || whoami")
+  BOOT_DEVICE=$("${SSH[@]}" "findmnt -n -o SOURCE /")
+  BUILD_NUMBER=$("${SSH[@]}" "uname -r")
 
-  OS_FULL=$($SSH "grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '\"'")
-  OS_NAME=$($SSH "grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '\"'")
-  OS_MANUFACTURER=$($SSH "grep '^ID=' /etc/os-release | cut -d= -f2")
-  OS_ARCH=$($SSH "uname -m")
+  OS_FULL=$("${SSH[@]}" "grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '\"'")
+  OS_NAME=$("${SSH[@]}" "grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '\"'")
+  OS_MANUFACTURER=$("${SSH[@]}" "grep '^ID=' /etc/os-release | cut -d= -f2")
+  OS_ARCH=$("${SSH[@]}" "uname -m")
 
-  OS_INSTALL_DATE=$($SSH "stat -c %y / | cut -d'.' -f1")
+  OS_INSTALL_DATE=$("${SSH[@]}" "stat -c %y / | cut -d'.' -f1")
 
-  CPU_MODEL=$($SSH "lscpu | grep 'Model name' | cut -d: -f2 | xargs")
-  CUR_CLOCK=$($SSH "lscpu | awk -F: '/CPU MHz/ {print \$2; exit}' | xargs")
-  MAX_CLOCK=$CUR_CLOCK
+  CPU_MODEL=$("${SSH[@]}" "lscpu | awk -F: '/Model name/ {print \$2}' | xargs")
+  CUR_CLOCK=$("${SSH[@]}" "lscpu | awk -F: '/CPU MHz/ {print \$2; exit}' | xargs")
+  MAX_CLOCK="$CUR_CLOCK"
 
-  DISKS=$($SSH "lsblk -dn -o NAME,MODEL | tr '\n' ';'")
-  NUM_DRIVES=$($SSH "lsblk -dn -o TYPE | grep -c disk")
-  DRIVES=$($SSH "lsblk -o NAME,SIZE,MOUNTPOINT -P | tr '\n' '|'")
-  SIZE_OF_DRIVES=$($SSH "lsblk -dn -o NAME,SIZE | tr '\n' ';'")
+  DISKS=$("${SSH[@]}" "lsblk -dn -o NAME,MODEL | tr '\n' ';'")
+  NUM_DRIVES=$("${SSH[@]}" "lsblk -dn -o TYPE | grep -c disk")
+  DRIVES=$("${SSH[@]}" "lsblk -o NAME,SIZE,MOUNTPOINT -P | tr '\n' '|'")
+  SIZE_OF_DRIVES=$("${SSH[@]}" "lsblk -dn -o NAME,SIZE | tr '\n' ';'")
 
-  GRAPHICS=$($SSH "lspci | grep -Ei 'VGA|3D|Display' | cut -d: -f3 | tr '\n' ';'")
+  GRAPHICS=$("${SSH[@]}" "lspci | grep -Ei 'VGA|3D|Display' | cut -d: -f3 | tr '\n' ';'")
 
-  NET_ADAPTERS=$($SSH "ip -o link show | awk -F': ' '{print \$2}' | tr '\n' ';'")
-  IP_ADDRESS=$($SSH "ip -o -4 addr show | awk '{print \$4}' | cut -d/ -f1 | tr '\n' ';'")
-  MAC_ADDRESS=$($SSH "ip link | awk '/ether/ {print \$2}' | tr '\n' ';'")
+  NET_ADAPTERS=$("${SSH[@]}" "ip -o link show | awk -F': ' '{print \$2}' | tr '\n' ';'")
+  IP_ADDRESS=$("${SSH[@]}" "ip -o -4 addr show | awk '{print \$4}' | cut -d/ -f1 | tr '\n' ';'")
+  MAC_ADDRESS=$("${SSH[@]}" "ip link | awk '/ether/ {print \$2}' | tr '\n' ';'")
 
   LAST_SCAN_TIME=$(date -u +"%Y-%m-%d %H:%M:%SZ")
 
