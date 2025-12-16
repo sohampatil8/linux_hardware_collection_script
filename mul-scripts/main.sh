@@ -32,7 +32,8 @@ while IFS= read -r target || [[ -n "$target" ]]; do
 
   echo "Scanning $HOST ..."
 
-  SSH=(ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 "$USER@$HOST")
+  SSH=(ssh -n -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 "$USER@$HOST")
+
 
   if ! "${SSH[@]}" "true" >/dev/null 2>&1; then
     echo "$(csvq "$HOST"),\"Offline\",\"SSH Failed\"" >> "$OUTFILE"
