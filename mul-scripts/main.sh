@@ -59,7 +59,8 @@ while IFS= read -r target || [[ -n "$target" ]]; do
   NUM_LOGICAL=$("${SSH[@]}" "nproc")
   TOTAL_SOCKETS=$("${SSH[@]}" "lscpu | awk -F: '/Socket\\(s\\)/ {print \$2}' | xargs")
   CORES_PER_SOCKET=$("${SSH[@]}" "lscpu | awk -F: '/Core\\(s\\) per socket/ {print \$2}' | xargs")
-  TOTAL_CORES=$("${SSH[@]}" "lscpu | awk -F: '/CPU\\(s\\)/ {print \$2}' | xargs")
+  #TOTAL_CORES=$("${SSH[@]}" "lscpu | awk -F: '/CPU\\(s\\)/ {print \$2}' | xargs")
+  TOTAL_CORES=$(( TOTAL_SOCKETS * CORES_PER_SOCKET ))
 
   TOTAL_MEM_GB=$("${SSH[@]}" "awk '/MemTotal/ {printf \"%.2f\", \$2/1024/1024}' /proc/meminfo")
 
