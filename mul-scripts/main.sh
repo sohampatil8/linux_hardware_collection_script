@@ -8,7 +8,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-OUTFILE="$SCRIPT_DIR/linux_inventory2.csv"
+OUTFILE="$SCRIPT_DIR/linux_inventory3.csv"
 HOSTS_FILE="$SCRIPT_DIR/hosts.txt"
 
 # ---------------- CSV HEADER ----------------
