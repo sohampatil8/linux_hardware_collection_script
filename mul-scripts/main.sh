@@ -8,11 +8,11 @@ set -euo pipefail
 IFS=$'\n\t'
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-OUTFILE="$SCRIPT_DIR/linux_inventory4.csv"
+OUTFILE="$SCRIPT_DIR/linux_inventory.csv"
 HOSTS_FILE="$SCRIPT_DIR/hosts.txt"
 
 # ---------------- CSV HEADER ----------------
-HEADER="HostName,Status,Remark,Domain,HypervisorPresent,Manufacturer,Model,NumberOfLogicalProcessors,NumberOfProcessors,PartOfDomain,SystemFamily,SystemSKUNumber,SystemType,TotalPhysicalMemory(GB),Primary_UserName,BootDevice,BuildNumber,Operating_System,OS_InstallDate,OS_Manufacturer,OS_Name,OSArchitecture,CPU,MaxClockSpeed(MHz),CurrentClockSpeed(MHz),Disks,Number_of_Drives,Drives,Size_of_Drives,Graphics_Card,Network_Adapters,MacAddress,IP_Address,Total_Sockets,Total_Cores,Cores_Per_Socket,Last_Scan_Time"
+HEADER="HostName,Status,Remark,Domain,HypervisorPresent,Manufacturer,Model,NumberOfLogicalProcessors,NumberOfProcessors,PartOfDomain,SystemFamily,SystemSKUNumber,SystemType,TotalPhysicalMemory(GB),Primary_UserName,BootDevice,BuildNumber,Operating_System,OS_InstallDate,OS_Manufacturer,OS_Name,OSArchitecture,CPU,MaxClockSpeed(MHz),CurrentClockSpeed(MHz),Disks,Number_of_Drives,Drives,Size_of_Drives,Graphics_Card,Network_Adapters,MacAddress,IP_Address,Total_Sockets,Total_Cores,Cores_Per_Socket,Threads,CPU_Sockets,CPU_Cores,CPU_Threads,Cores_Per_Socket,Last_Scan_Time"
 
 echo "$HEADER" > "$OUTFILE"
 
@@ -89,7 +89,28 @@ while IFS= read -r target || [[ -n "$target" ]]; do
   NET_ADAPTERS=$("${SSH[@]}" "ip -o link show | awk -F': ' '{print \$2}' | tr '\n' ';'")
   IP_ADDRESS=$("${SSH[@]}" "ip -o -4 addr show | awk '{print \$4}' | cut -d/ -f1 | tr '\n' ';'")
   MAC_ADDRESS=$("${SSH[@]}" "ip link | awk '/ether/ {print \$2}' | tr '\n' ';'")
+# ================= CPU (ORACLE STYLE) =================
+THREADS=$(nproc)
 
+if cmd_exists lscpu; then
+  CPU_Sockets=$("${SSH[@]}" "lscpu | awk -F: '/Socket/ {gsub(/ /,"",$2);print $2}'")
+  Cores_Per_Socket$("${SSH[@]}" "lscpu | awk -F: '/Core\(s\) per socket/ {gsub(/ /,"",$2);print $2}'")
+  Threads_Per_Core=$("${SSH[@]}" "lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2);print $2}'")
+  CPU_Threads=$("${SSH[@]}" "lscpu | awk -F: '/^CPU\(s\):/ {gsub(/ /,"",$2);print $2}'")
+else
+  CPU_Sockets=1
+  Cores_Per_Socket="$THREADS"
+  Threads_Per_Core=1
+  CPU_Threads="$THREADS"
+fi
+
+CPU_Cores=$(( CPU_Sockets * Cores_Per_Socket ))
+HyperThreading=$([ "$Threads_Per_Core" -gt 1 ] && echo "YES" || echo "NO")
+
+CPU_Model=$(awk -F: '/model name/ {print $2;exit}' /proc/cpuinfo | sed 's/^ *//')
+CurrentClockSpeed=$(awk -F: '/cpu MHz/ {print int($2);exit}' /proc/cpuinfo)
+MaxClockSpeed=$(awk -F: '/cpu MHz/ {if($2>m)m=$2} END{print int(m)}' /proc/cpuinfo)
+#
   LAST_SCAN_TIME=$(date -u +"%Y-%m-%d %H:%M:%SZ")
 
   VALUES=(
@@ -101,7 +122,8 @@ while IFS= read -r target || [[ -n "$target" ]]; do
     "$OS_ARCH" "$CPU_MODEL" "$MAX_CLOCK" "$CUR_CLOCK"
     "$DISKS" "$NUM_DRIVES" "$DRIVES" "$SIZE_OF_DRIVES"
     "$GRAPHICS" "$NET_ADAPTERS" "$MAC_ADDRESS" "$IP_ADDRESS"
-    "$TOTAL_SOCKETS" "$TOTAL_CORES" "$CORES_PER_SOCKET"
+    "$TOTAL_SOCKETS" "$TOTAL_CORES" "$CORES_PER_SOCKET" "$THREADS"
+    "$CPU_Sockets" "$CPU_Cores" "$CPU_Threads" "$Cores_Per_Socket" 
     "$LAST_SCAN_TIME"
   )
 
