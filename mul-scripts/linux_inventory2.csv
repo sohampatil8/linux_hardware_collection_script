@@ -1,2 +1,2 @@
 HostName,Status,Remark,Domain,HypervisorPresent,Manufacturer,Model,NumberOfLogicalProcessors,NumberOfProcessors,PartOfDomain,SystemFamily,SystemSKUNumber,SystemType,TotalPhysicalMemory(GB),Primary_UserName,BootDevice,BuildNumber,Operating_System,OS_InstallDate,OS_Manufacturer,OS_Name,OSArchitecture,CPU,MaxClockSpeed(MHz),CurrentClockSpeed(MHz),Disks,Number_of_Drives,Drives,Size_of_Drives,Graphics_Card,Network_Adapters,MacAddress,IP_Address,Total_Sockets,Total_Cores,Cores_Per_Socket,Last_Scan_Time
-"192.168.1.102","Offline","SSH Failed"
+"192.168.1.102","Offline","SSH Failed"
