@@ -1,116 +1,117 @@
 #!/usr/bin/env bash
-# Multi-host Linux Inventory Scanner with Parallel Execution + Logging
+# server_report_full_ssh.sh
+# Collect full Linux inventory from multiple hosts via SSH
+# Input  : hosts.txt (user@host per line)
+# Output : linux_inventory2.csv
 
-set -uo pipefail
+set -euo pipefail
 IFS=$'\n\t'
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+OUTFILE="$SCRIPT_DIR/linux_inventory2.csv"
 HOSTS_FILE="$SCRIPT_DIR/hosts.txt"
-REMOTE_SCRIPT="/tmp/linux_inventory.sh"
-LOCAL_INVENTORY="$SCRIPT_DIR/hw_inventory.sh"
-MERGED_CSV="$SCRIPT_DIR/linux_inventory_merged.csv"
-LOG_DIR="$SCRIPT_DIR/logs"
 
-mkdir -p "$LOG_DIR"
+# ---------------- CSV HEADER ----------------
+HEADER="HostName,Status,Remark,Domain,HypervisorPresent,Manufacturer,Model,NumberOfLogicalProcessors,NumberOfProcessors,PartOfDomain,SystemFamily,SystemSKUNumber,SystemType,TotalPhysicalMemory(GB),Primary_UserName,BootDevice,BuildNumber,Operating_System,OS_InstallDate,OS_Manufacturer,OS_Name,OSArchitecture,CPU,MaxClockSpeed(MHz),CurrentClockSpeed(MHz),Disks,Number_of_Drives,Drives,Size_of_Drives,Graphics_Card,Network_Adapters,MacAddress,IP_Address,Total_Sockets,Total_Cores,Cores_Per_Socket,Last_Scan_Time"
 
-# Host scan timeout (SSH + Script Execution)
-TIMEOUT_SECONDS=60
+echo "$HEADER" > "$OUTFILE"
 
-if [ ! -f "$HOSTS_FILE" ]; then
-    echo "ERROR: hosts.txt file not found"
-    exit 1
-fi
-
-if [ ! -f "$LOCAL_INVENTORY" ]; then
-    echo "ERROR: inventory.sh file not found"
-    exit 1
-fi
-
-echo "Starting parallel scan of all Linux machines..."
-echo "Logs stored in: $LOG_DIR"
-echo "--------------------------------------------------"
-
-# Clear merged file
-echo "" > "$MERGED_CSV"
-HEADER_WRITTEN=0
-
-scan_host() {
-    ENTRY="$1"
-    USER=$(echo "$ENTRY" | cut -d@ -f1)
-    HOST=$(echo "$ENTRY" | cut -d@ -f2)
-    LOGFILE="$LOG_DIR/${HOST}.log"
-
-    {
-        echo "=== Scan Started for $USER@$HOST ==="
-        date
-
-        # Check SSH connection
-        timeout $TIMEOUT_SECONDS ssh -o BatchMode=yes -o ConnectTimeout=10 "$USER@$HOST" "echo ok" 2>/dev/null
-        if [ $? -ne 0 ]; then
-            echo "[ERROR] SSH connection failed for $HOST"
-            echo "STATUS: FAILED" >> "$LOGFILE"
-            exit 1
-        fi
-
-        echo "SSH connection successful."
-
-        # Upload inventory script
-        scp "$LOCAL_INVENTORY" "$USER@$HOST:$REMOTE_SCRIPT" >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            echo "[ERROR] SCP upload failed for $HOST"
-            exit 1
-        fi
-
-        echo "Inventory script uploaded."
-
-        # Execute remote script with timeout
-        timeout $TIMEOUT_SECONDS ssh "$USER@$HOST" "bash $REMOTE_SCRIPT" >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            echo "[ERROR] Script execution failed or timed out on $HOST"
-            exit 1
-        fi
-
-        echo "Remote scan completed."
-
-        # Download generated CSV
-        REMOTE_CSV="/tmp/linux_inventory.csv"
-        LOCAL_CSV="$SCRIPT_DIR/linux_${HOST}.csv"
-        scp "$USER@$HOST:$REMOTE_CSV" "$LOCAL_CSV" >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            echo "[ERROR] Failed to download CSV from $HOST"
-            exit 1
-        fi
-
-        echo "CSV downloaded to $LOCAL_CSV"
-
-        # Merge into master CSV
-        if [ $HEADER_WRITTEN -eq 0 ]; then
-            head -n 1 "$LOCAL_CSV" >> "$MERGED_CSV"
-            HEADER_WRITTEN=1
-        fi
-        tail -n 1 "$LOCAL_CSV" >> "$MERGED_CSV"
-
-        echo "Merged into master report."
-
-        echo "STATUS: SUCCESS"
-        date
-        echo "=== Scan Completed ==="
-
-    } > "$LOGFILE" 2>&1
+# ---------------- CSV QUOTE ----------------
+csvq() {
+  local v="${1:-}"
+  v="${v//\"/\"\"}"
+  printf "\"%s\"" "$v"
 }
 
-# Export function for parallel use
-export -f scan_host
-export SCRIPT_DIR MERGED_CSV HEADER_WRITTEN LOCAL_INVENTORY REMOTE_SCRIPT LOG_DIR
+# ---------------- LOOP HOSTS ----------------
+while IFS= read -r target || [[ -n "$target" ]]; do
+  [[ -z "$target" || "$target" =~ ^# ]] && continue
 
-# Run in parallel (one background job per host)
-for HOSTENTRY in $(cat "$HOSTS_FILE"); do
-    scan_host "$HOSTENTRY" &
-done
+  USER="${target%@*}"
+  HOST="${target#*@}"
 
-wait
+  echo "Scanning $HOST ..."
 
-echo "--------------------------------------------------"
-echo "All scans completed!"
-echo "Final merged CSV: $MERGED_CSV"
-echo "Check logs folder for per-host debugging."
+  SSH="ssh -o StrictHostKeyChecking=no -o BatchMode=yes $USER@$HOST"
+
+  HOSTNAME=$($SSH "hostname -s" 2>/dev/null || echo "")
+  STATUS="Online"
+  REMARK=""
+
+  DOMAIN=$($SSH "hostname -d" 2>/dev/null || echo "")
+  PART_OF_DOMAIN=$([ -n "$DOMAIN" ] && echo "True" || echo "False")
+
+  HypervisorPresent=$($SSH "systemd-detect-virt >/dev/null 2>&1 && echo True || echo False")
+
+  MANUFACTURER=$($SSH "sudo dmidecode -s system-manufacturer 2>/dev/null" || echo "N/A")
+  MODEL=$($SSH "sudo dmidecode -s system-product-name 2>/dev/null" || echo "N/A")
+  SYSTEM_FAMILY=$($SSH "sudo dmidecode -s system-family 2>/dev/null" || echo "N/A")
+  SYSTEM_SKU=$($SSH "sudo dmidecode -s system-sku 2>/dev/null" || echo "N/A")
+
+  SYSTEM_TYPE=$($SSH "uname -m")
+
+  NUM_LOGICAL=$($SSH "nproc")
+  TOTAL_SOCKETS=$($SSH "lscpu | awk -F: '/Socket/ {print \$2}' | xargs")
+  TOTAL_CORES=$($SSH "lscpu | awk -F: '/CPU\\(s\\)/ {print \$2}' | xargs")
+  CORES_PER_SOCKET=$($SSH "lscpu | awk -F: '/Core\\(s\\) per socket/ {print \$2}' | xargs")
+
+  TOTAL_MEM_GB=$($SSH "awk '/MemTotal/ {printf \"%.2f\", \$2/1024/1024}' /proc/meminfo")
+
+  PRIMARY_USER=$($SSH "logname 2>/dev/null || whoami")
+  BOOT_DEVICE=$($SSH "findmnt -n -o SOURCE /")
+  BUILD_NUMBER=$($SSH "uname -r")
+
+  OS_FULL=$($SSH "grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d '\"'")
+  OS_NAME=$($SSH "grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '\"'")
+  OS_MANUFACTURER=$($SSH "grep '^ID=' /etc/os-release | cut -d= -f2")
+  OS_ARCH=$($SSH "uname -m")
+
+  OS_INSTALL_DATE=$($SSH "stat -c %y / | cut -d'.' -f1")
+
+  CPU_MODEL=$($SSH "lscpu | grep 'Model name' | cut -d: -f2 | xargs")
+  CUR_CLOCK=$($SSH "lscpu | awk -F: '/CPU MHz/ {print \$2; exit}' | xargs")
+  MAX_CLOCK=$CUR_CLOCK
+
+  DISKS=$($SSH "lsblk -dn -o NAME,MODEL | tr '\n' ';'")
+  NUM_DRIVES=$($SSH "lsblk -dn -o TYPE | grep -c disk")
+  DRIVES=$($SSH "lsblk -o NAME,SIZE,MOUNTPOINT -P | tr '\n' '|'")
+  SIZE_OF_DRIVES=$($SSH "lsblk -dn -o NAME,SIZE | tr '\n' ';'")
+
+  GRAPHICS=$($SSH "lspci | grep -Ei 'VGA|3D|Display' | cut -d: -f3 | tr '\n' ';'")
+
+  NET_ADAPTERS=$($SSH "ip -o link show | awk -F': ' '{print \$2}' | tr '\n' ';'")
+  IP_ADDRESS=$($SSH "ip -o -4 addr show | awk '{print \$4}' | cut -d/ -f1 | tr '\n' ';'")
+  MAC_ADDRESS=$($SSH "ip link | awk '/ether/ {print \$2}' | tr '\n' ';'")
+
+  LAST_SCAN_TIME=$(date -u +"%Y-%m-%d %H:%M:%SZ")
+
+  VALUES=(
+    "$HOSTNAME" "$STATUS" "$REMARK" "$DOMAIN" "$HypervisorPresent"
+    "$MANUFACTURER" "$MODEL" "$NUM_LOGICAL" "$TOTAL_SOCKETS"
+    "$PART_OF_DOMAIN" "$SYSTEM_FAMILY" "$SYSTEM_SKU" "$SYSTEM_TYPE"
+    "$TOTAL_MEM_GB" "$PRIMARY_USER" "$BOOT_DEVICE" "$BUILD_NUMBER"
+    "$OS_FULL" "$OS_INSTALL_DATE" "$OS_MANUFACTURER" "$OS_NAME"
+    "$OS_ARCH" "$CPU_MODEL" "$MAX_CLOCK" "$CUR_CLOCK"
+    "$DISKS" "$NUM_DRIVES" "$DRIVES" "$SIZE_OF_DRIVES"
+    "$GRAPHICS" "$NET_ADAPTERS" "$MAC_ADDRESS" "$IP_ADDRESS"
+    "$TOTAL_SOCKETS" "$TOTAL_CORES" "$CORES_PER_SOCKET"
+    "$LAST_SCAN_TIME"
+  )
+
+  CSV_LINE=""
+  first=1
+  for v in "${VALUES[@]}"; do
+    v="${v//$'\n'/ }"
+    if [ $first -eq 1 ]; then
+      CSV_LINE="$(csvq "$v")"
+      first=0
+    else
+      CSV_LINE="$CSV_LINE,$(csvq "$v")"
+    fi
+  done
+
+  echo "$CSV_LINE" >> "$OUTFILE"
+
+done < "$HOSTS_FILE"
+
+echo "Inventory completed → $OUTFILE"
