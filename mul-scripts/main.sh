@@ -90,13 +90,13 @@ while IFS= read -r target || [[ -n "$target" ]]; do
   IP_ADDRESS=$("${SSH[@]}" "ip -o -4 addr show | awk '{print \$4}' | cut -d/ -f1 | tr '\n' ';'")
   MAC_ADDRESS=$("${SSH[@]}" "ip link | awk '/ether/ {print \$2}' | tr '\n' ';'")
 # ================= CPU (ORACLE STYLE) =================
-THREADS=$(nproc)
+THREADS=$("${SSH[@]}" "nproc")
 
 if cmd_exists lscpu; then
-  CPU_Sockets=$("${SSH[@]}" "lscpu | awk -F: '/Socket/ {gsub(/ /,"",$2);print $2}'")
-  Cores_Per_Socket$("${SSH[@]}" "lscpu | awk -F: '/Core\(s\) per socket/ {gsub(/ /,"",$2);print $2}'")
-  Threads_Per_Core=$("${SSH[@]}" "lscpu | awk -F: '/Thread\(s\) per core/ {gsub(/ /,"",$2);print $2}'")
-  CPU_Threads=$("${SSH[@]}" "lscpu | awk -F: '/^CPU\(s\):/ {gsub(/ /,"",$2);print $2}'")
+  CPU_Sockets=$("${SSH[@]}" "lscpu | awk -F: '/Socket\\(s\\)/ {gsub(/ /,\"\",\$2); print \$2}'")
+  Cores_Per_Socket=$("${SSH[@]}" "lscpu | awk -F: '/Core\\(s\\) per socket/ {gsub(/ /,\"\",\$2); print \$2}'")
+  Threads_Per_Core=$("${SSH[@]}" "lscpu | awk -F: '/Thread\\(s\\) per core/ {gsub(/ /,\"\",\$2); print \$2}'")
+  CPU_Threads=$("${SSH[@]}" "lscpu | awk -F: '/^CPU\\(s\\)/ {gsub(/ /,\"\",\$2); print \$2}'")
 else
   CPU_Sockets=1
   Cores_Per_Socket="$THREADS"
@@ -105,11 +105,14 @@ else
 fi
 
 CPU_Cores=$(( CPU_Sockets * Cores_Per_Socket ))
-HyperThreading=$([ "$Threads_Per_Core" -gt 1 ] && echo "YES" || echo "NO")
 
-CPU_Model=$(awk -F: '/model name/ {print $2;exit}' /proc/cpuinfo | sed 's/^ *//')
-CurrentClockSpeed=$(awk -F: '/cpu MHz/ {print int($2);exit}' /proc/cpuinfo)
-MaxClockSpeed=$(awk -F: '/cpu MHz/ {if($2>m)m=$2} END{print int(m)}' /proc/cpuinfo)
+HyperThreading=$(
+  [ "$Threads_Per_Core" -gt 1 ] && echo "YES" || echo "NO"
+)
+
+CPU_Model=$("${SSH[@]}" "awk -F: '/model name/ {print \$2; exit}' /proc/cpuinfo | sed 's/^ *//'")
+CurrentClockSpeed=$("${SSH[@]}" "awk -F: '/cpu MHz/ {print int(\$2); exit}' /proc/cpuinfo")
+MaxClockSpeed=$("${SSH[@]}" "awk -F: '/cpu MHz/ {if(\$2>m)m=\$2} END{print int(m)}' /proc/cpuinfo")
 #
   LAST_SCAN_TIME=$(date -u +"%Y-%m-%d %H:%M:%SZ")
 
