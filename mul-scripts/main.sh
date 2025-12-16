@@ -92,7 +92,6 @@ while IFS= read -r target || [[ -n "$target" ]]; do
 # ================= CPU (ORACLE STYLE) =================
 THREADS=$("${SSH[@]}" "nproc")
 
-if cmd_exists lscpu; then
   CPU_Sockets=$("${SSH[@]}" "lscpu | awk -F: '/Socket\\(s\\)/ {gsub(/ /,\"\",\$2); print \$2}'")
   Cores_Per_Socket=$("${SSH[@]}" "lscpu | awk -F: '/Core\\(s\\) per socket/ {gsub(/ /,\"\",\$2); print \$2}'")
   Threads_Per_Core=$("${SSH[@]}" "lscpu | awk -F: '/Thread\\(s\\) per core/ {gsub(/ /,\"\",\$2); print \$2}'")
